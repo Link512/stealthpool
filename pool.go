@@ -4,8 +4,6 @@ import (
 	"reflect"
 	"sync"
 	"unsafe"
-
-	"go.uber.org/multierr"
 )
 
 type poolOpts struct {
@@ -19,14 +17,18 @@ var (
 	}
 )
 
+// PoolOpt is a configuration option for a stealthpool
 type PoolOpt func(*poolOpts)
 
+// WithPreAlloc specifies how many blocks the pool should preallocate on initialization. Default is 0.
 func WithPreAlloc(prealloc int) PoolOpt {
 	return func(opts *poolOpts) {
 		opts.preAlloc = prealloc
 	}
 }
 
+// WithBlockSize specifies the block size that will be returned. It is highly advised that this block size be a multiple of 4KB or whatever value
+// `os.Getpagesize()`, since the mmap syscall returns page aligned memory
 func WithBlockSize(blockSize int) PoolOpt {
 	return func(opts *poolOpts) {
 		opts.blockSize = blockSize
@@ -44,6 +46,8 @@ type Pool struct {
 	maxBlocks int
 }
 
+// New returns a new stealthpool with the given capacity. The configuration options can be used to change how many blocks are preallocated or block size.
+// If preallocation fails (out of memory, etc), a cleanup of all previously preallocated will be attempted
 func New(maxBlocks int, opts ...PoolOpt) (*Pool, error) {
 	o := defaultPoolOpts
 	for _, opt := range opts {
@@ -65,6 +69,8 @@ func New(maxBlocks int, opts ...PoolOpt) (*Pool, error) {
 	return p, nil
 }
 
+// Get returns a memory block. It will first try and retrieve a previously allocated block and if that's not possible, will allocate a new block.
+// If there were maxBlocks blocks already allocated, returns ErrPoolFull
 func (p *Pool) Get() ([]byte, error) {
 	if b, ok := p.tryPop(); ok {
 		return b, nil
@@ -85,6 +91,8 @@ func (p *Pool) Get() ([]byte, error) {
 	return result, nil
 }
 
+// Return gives back a block retrieved from Get and stores it for future re-use.
+// The block has to be exactly the same slice object returned from Get(), otherwise ErrInvalidBlock will be returned.
 func (p *Pool) Return(b []byte) error {
 	if err := p.checkValidBlock(b); err != nil {
 		return err
@@ -95,18 +103,22 @@ func (p *Pool) Return(b []byte) error {
 	return nil
 }
 
+// FreeCount returns the number of free blocks that can be reused
 func (p *Pool) FreeCount() int {
 	p.freeMu.Lock()
 	defer p.freeMu.Unlock()
 	return len(p.free)
 }
 
+// AllocCount returns the total number of allocated blocks so far
 func (p *Pool) AllocCount() int {
 	p.allocatedMu.Lock()
 	defer p.allocatedMu.Unlock()
 	return len(p.allocated)
 }
 
+// Close will cleanup the memory pool and deallocate ALL previously allocated blocks.
+// Using any of the blocks returned from Get() after a call to Close() will result in a panic
 func (p *Pool) Close() error {
 	return p.cleanup()
 }
@@ -142,14 +154,14 @@ func (p *Pool) checkValidBlock(block []byte) error {
 }
 
 func (p *Pool) prealloc(n int) error {
-	if n < 0 || n >= p.maxBlocks {
+	if n < 0 || n > p.maxBlocks {
 		return ErrPreallocOutOfBounds
 	}
 
 	for i := 0; i < n; i++ {
 		block, err := alloc(p.initOpts.blockSize)
 		if err != nil {
-			p.cleanup()
+			_ = p.cleanup()
 			return err
 		}
 		k := &block[0]
@@ -161,15 +173,15 @@ func (p *Pool) prealloc(n int) error {
 
 func (p *Pool) cleanup() error {
 	p.allocatedMu.Lock()
-	var err error
+	multiErr := newMultiErr()
 	for arrayPtr := range p.allocated {
 		var block []byte
 		hdr := (*reflect.SliceHeader)(unsafe.Pointer(&block))
 		hdr.Cap = p.initOpts.blockSize
 		hdr.Len = p.initOpts.blockSize
 		hdr.Data = uintptr(unsafe.Pointer(arrayPtr))
-		if dealocErr := dealloc(block); dealocErr != nil {
-			err = multierr.Append(err, dealocErr)
+		if err := dealloc(block); err != nil {
+			multiErr.Add(err)
 		}
 	}
 	p.allocated = nil
@@ -178,5 +190,5 @@ func (p *Pool) cleanup() error {
 	p.freeMu.Lock()
 	p.free = nil
 	p.freeMu.Unlock()
-	return err
+	return multiErr.Return()
 }

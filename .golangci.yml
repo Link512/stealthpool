@@ -1,0 +1,58 @@
+run:
+  deadline: 240s
+
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - deadcode
+    - dupl
+    - errcheck
+    - gas
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - revive
+    - gosimple
+    - govet
+    - ineffassign
+    - misspell
+    - staticcheck
+    - unconvert
+    - unused
+    - varcheck
+
+linters-settings:
+  goconst:
+    min-len: 5
+    min-occurrences: 5
+  gofmt:
+    simplify: true
+  goimports:
+    local-prefixes: github.com/Link512/stealthpool
+  gocritic:
+    disabled-checks:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    settings:
+      hugeParam:
+        sizeThreshold: 364
+      rangeValCopy:
+        sizeThreshold: 364
+        skipTestFuncs: true
+  govet:
+    enable-all: true
+issues:
+  exclude:
+    - '^shadow: declaration of "err"'
+    - "^exported: "
+  exclude-rules:
+    - linters:
+        - govet
+      text: "fieldalignment: struct with \\d+ pointer bytes could be \\d+"
