@@ -5,16 +5,18 @@ name: CI/CD
 
 steps:
   - name: test
-    image: golang:1.16
+    image: golang:1.16-alpine
     commands:
-      - make test
+      - go test ./...
 
   - name: build
     image: golang
+    environment:
+      - CGO_ENABLED=0
     commands:
-      - make build
+      - go build ./...
 
   - name: lint
     image: golangci/golangci-lint
     commands:
-      - make lint
+      - golangci-lint run --fast
