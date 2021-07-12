@@ -114,6 +114,59 @@ func ExamplePool_Return() {
 	// free blocks: 1 total allocated: 1
 }
 
+func ExamplePool_AllocCount() {
+	pool, err := stealthpool.New(1)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("total allocated: %d\n", pool.AllocCount())
+
+	pool.Get()
+	fmt.Printf("total allocated: %d\n", pool.AllocCount())
+
+	pool.Close()
+
+	newPool, err := stealthpool.New(3, stealthpool.WithPreAlloc(2))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("total allocated: %d\n", newPool.AllocCount())
+	newPool.Close()
+
+	// Output:
+	// total allocated: 0
+	// total allocated: 1
+	// total allocated: 2
+}
+
+func ExamplePool_FreeCount() {
+	pool, err := stealthpool.New(1)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("free blocks: %d\n", pool.FreeCount())
+
+	block, _ := pool.Get()
+	fmt.Printf("free blocks: %d\n", pool.FreeCount())
+
+	pool.Return(block)
+	fmt.Printf("free blocks: %d\n", pool.FreeCount())
+	pool.Close()
+
+	newPool, err := stealthpool.New(3, stealthpool.WithPreAlloc(2))
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("free blocks: %d\n", newPool.FreeCount())
+	newPool.Close()
+
+	// Output:
+	// free blocks: 0
+	// free blocks: 0
+	// free blocks: 1
+	// free blocks: 2
+}
+
 func ExamplePool_Close() {
 	pool, err := stealthpool.New(2)
 	if err != nil {
