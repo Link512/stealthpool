@@ -5,7 +5,7 @@ name: CI/CD
 
 steps:
   - name: test
-    image: golang
+    image: golang:1.16
     commands:
       - make test
 

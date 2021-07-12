@@ -54,7 +54,7 @@ func ExampleNew_preallocation() {
 	fmt.Printf("len(block): %d cap(block): %d\n", len(block), cap(block))
 
 	// Output:
-	// len(block): 8388608 cap(block): 8388608
+	// len(block): 4096 cap(block): 4096
 }
 
 func ExamplePool_Get() {
