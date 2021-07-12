@@ -121,7 +121,7 @@ func ExamplePool_AllocCount() {
 	}
 	fmt.Printf("total allocated: %d\n", pool.AllocCount())
 
-	pool.Get()
+	_, _ = pool.Get()
 	fmt.Printf("total allocated: %d\n", pool.AllocCount())
 
 	pool.Close()
@@ -149,7 +149,7 @@ func ExamplePool_FreeCount() {
 	block, _ := pool.Get()
 	fmt.Printf("free blocks: %d\n", pool.FreeCount())
 
-	pool.Return(block)
+	_ = pool.Return(block)
 	fmt.Printf("free blocks: %d\n", pool.FreeCount())
 	pool.Close()
 

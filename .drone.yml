@@ -6,13 +6,15 @@ name: CI/CD
 steps:
   - name: test
     image: golang:1.16-alpine
+    environment:
+      CGO_ENABLED: 0
     commands:
       - go test ./...
 
   - name: build
-    image: golang
+    image: golang:1.16-alpine
     environment:
-      - CGO_ENABLED=0
+      CGO_ENABLED: 0
     commands:
       - go build ./...
 
