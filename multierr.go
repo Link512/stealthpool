@@ -7,7 +7,7 @@ type MultiError struct {
 	errs []error
 }
 
-func newMultiErr() *MultiError {
+func NewMultiErr() *MultiError {
 	return &MultiError{}
 }
 
@@ -32,5 +32,5 @@ func (e *MultiError) Error() string {
 	for _, e := range e.errs {
 		result.WriteString(e.Error() + "\n")
 	}
-	return result.String()
+	return strings.TrimRight(result.String(), "\n")
 }

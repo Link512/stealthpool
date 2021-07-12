@@ -173,7 +173,7 @@ func (p *Pool) prealloc(n int) error {
 
 func (p *Pool) cleanup() error {
 	p.allocatedMu.Lock()
-	multiErr := newMultiErr()
+	multiErr := NewMultiErr()
 	for arrayPtr := range p.allocated {
 		var block []byte
 		hdr := (*reflect.SliceHeader)(unsafe.Pointer(&block))
