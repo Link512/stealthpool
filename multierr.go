@@ -7,6 +7,7 @@ type MultiError struct {
 	errs []error
 }
 
+// NewMultiErr returns a ready to use MultiError
 func NewMultiErr() *MultiError {
 	return &MultiError{}
 }

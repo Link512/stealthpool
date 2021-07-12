@@ -35,6 +35,7 @@ func WithBlockSize(blockSize int) PoolOpt {
 	}
 }
 
+// Pool is the off heap memory pool. It it safe to be used concurrently
 type Pool struct {
 	free   [][]byte
 	freeMu *sync.Mutex
