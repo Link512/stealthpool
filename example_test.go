@@ -7,6 +7,22 @@ import (
 	"github.com/Link512/stealthpool"
 )
 
+func ExampleNew() {
+	pool, err := stealthpool.New(2)
+	if err != nil {
+		panic(err)
+	}
+	defer pool.Close()
+
+	block, err := pool.Get()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("len(block): %d cap(block): %d\n", len(block), cap(block))
+	// Output:
+	// len(block): 4096 cap(block): 4096
+}
+
 func ExampleNew_customBlockSize() {
 	pool, err := stealthpool.New(2, stealthpool.WithBlockSize(8*1024*1024))
 	if err != nil {
@@ -19,12 +35,26 @@ func ExampleNew_customBlockSize() {
 		panic(err)
 	}
 	fmt.Printf("len(block): %d cap(block): %d\n", len(block), cap(block))
+
 	// Output:
 	// len(block): 8388608 cap(block): 8388608
 }
 
-func copyStrToSlice(b []byte, s string) []byte {
-	return append(b, []byte(s)...)
+func ExampleNew_preallocation() {
+	pool, err := stealthpool.New(2, stealthpool.WithPreAlloc(2))
+	if err != nil {
+		panic(err)
+	}
+	defer pool.Close()
+
+	block, err := pool.Get()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("len(block): %d cap(block): %d\n", len(block), cap(block))
+
+	// Output:
+	// len(block): 8388608 cap(block): 8388608
 }
 
 func ExamplePool_Get() {
