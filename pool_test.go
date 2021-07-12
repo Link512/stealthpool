@@ -3,9 +3,10 @@ package stealthpool_test
 import (
 	"testing"
 
-	"github.com/Link512/stealthpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/Link512/stealthpool"
 )
 
 func TestPool_New(t *testing.T) {
@@ -29,10 +30,10 @@ func TestPool_New_prealloc(t *testing.T) {
 	require := require.New(t)
 	assert := assert.New(t)
 
-	pool, err := stealthpool.New(3, stealthpool.WithBlockSize(8*1024), stealthpool.WithPreAlloc(4))
+	_, err := stealthpool.New(3, stealthpool.WithBlockSize(8*1024), stealthpool.WithPreAlloc(4))
 	require.ErrorIs(err, stealthpool.ErrPreallocOutOfBounds)
 
-	pool, err = stealthpool.New(3, stealthpool.WithBlockSize(8*1024), stealthpool.WithPreAlloc(2))
+	pool, err := stealthpool.New(3, stealthpool.WithBlockSize(8*1024), stealthpool.WithPreAlloc(2))
 	require.NoError(err)
 
 	defer pool.Close()
@@ -81,7 +82,7 @@ func TestPool_Get(t *testing.T) {
 	assert.Equal(0, pool.FreeCount())
 	assert.Equal(3, pool.AllocCount())
 
-	block, err = pool.Get()
+	_, err = pool.Get()
 	require.ErrorIs(err, stealthpool.ErrPoolFull)
 }
 

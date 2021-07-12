@@ -135,6 +135,6 @@ func ExamplePool_Close() {
 	}
 
 	// using the slices after Close() will panic
-	copyStrToSlice(block1, "Hello")
-	copyStrToSlice(block2, "World")
+	fmt.Println(block1[:5])
+	fmt.Println(block2[3:])
 }

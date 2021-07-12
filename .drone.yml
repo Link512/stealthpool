@@ -1,0 +1,20 @@
+---
+kind: pipeline
+type: docker
+name: CI/CD
+
+steps:
+  - name: test
+    image: golang
+    commands:
+      - make test
+
+  - name: build
+    image: golang
+    commands:
+      - make build
+
+  - name: lint
+    image: golangci/golangci-lint
+    commands:
+      - make lint

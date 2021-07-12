@@ -56,3 +56,7 @@ issues:
     - linters:
         - govet
       text: "fieldalignment: struct with \\d+ pointer bytes could be \\d+"
+    - path: _test\.go
+      linters:
+        - gocritic
+      text: "importShadow: shadow of imported from 'github.com/stretchr/testify.*'"

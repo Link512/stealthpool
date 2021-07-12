@@ -1,6 +1,6 @@
 # Stealthpool
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/Link512/stealthpool.svg)](https://pkg.go.dev/github.com/Link512/stealthpool)
+[![Build Status](https://cloud.drone.io/api/badges/Link512/stealthpool/status.svg)](https://cloud.drone.io/Link512/stealthpool) [![Go Report Card](https://goreportcard.com/badge/github.com/Link512/stealthpool)](https://goreportcard.com/report/github.com/Link512/stealthpool) [![Go Reference](https://pkg.go.dev/badge/github.com/Link512/stealthpool.svg)](https://pkg.go.dev/github.com/Link512/stealthpool)
 
 stealthpool provides a memory pool that allocates blocks off-heap that will NOT be tracked by the garbage collector.
 The name stealthpool comes from the fact that the memory being allocated by the pool is `stealthy` and will not be garbage collected ever
