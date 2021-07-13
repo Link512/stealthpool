@@ -1,6 +1,6 @@
 SHELL := /bin/bash -euo pipefail
 
-VERSION=0.0.1
+VERSION=0.1.0
 
 VERSION_PARTS := $(subst ., ,$(VERSION))
 
