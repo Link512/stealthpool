@@ -7,6 +7,4 @@
 //	pool, _ := stealthpool.New(1)
 //	// ...
 //	defer pool.Close() // always call Close to avoid memory leaks
-//
-// For now, the library works only on unix type OSes that support the `mmap` sycall
 package stealthpool
