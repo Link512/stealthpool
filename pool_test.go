@@ -122,3 +122,22 @@ func TestPool_Return(t *testing.T) {
 	assert.Len(block2, 8*1024)
 	assert.Equal(block2, block3)
 }
+
+func TestPool_CanAccessMemory(t *testing.T) {
+	require := require.New(t)
+	assert := assert.New(t)
+
+	pool, err := stealthpool.New(1, stealthpool.WithBlockSize(256))
+	require.NoError(err)
+	defer pool.Close()
+
+	block, err := pool.Get()
+	require.NoError(err)
+
+	payload := make([]byte, 256)
+	for i := range payload {
+		payload[i] = byte(i)
+	}
+	copy(block, payload)
+	assert.Equal(payload, block)
+}
