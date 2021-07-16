@@ -47,6 +47,8 @@ func ExampleNew_preallocation() {
 	}
 	defer pool.Close()
 
+	fmt.Printf("free blocks: %d total allocated: %d\n", pool.FreeCount(), pool.AllocCount())
+
 	block, err := pool.Get()
 	if err != nil {
 		panic(err)
@@ -54,6 +56,7 @@ func ExampleNew_preallocation() {
 	fmt.Printf("len(block): %d cap(block): %d\n", len(block), cap(block))
 
 	// Output:
+	// free blocks: 2 total allocated: 2
 	// len(block): 4096 cap(block): 4096
 }
 
@@ -103,15 +106,18 @@ func ExamplePool_Return() {
 	}
 	fmt.Printf("free blocks: %d total allocated: %d\n", pool.FreeCount(), pool.AllocCount())
 
-	block, err = pool.Get()
+	newBlock, err := pool.Get()
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Printf("block was reused: %t\n", &block[0] == &newBlock[0])
 
 	// Output:
 	// free blocks: 0 total allocated: 1
 	// resliced block is invalid: true
 	// free blocks: 1 total allocated: 1
+	// block was reused: true
 }
 
 func ExamplePool_AllocCount() {
