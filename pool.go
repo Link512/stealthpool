@@ -2,6 +2,7 @@ package stealthpool
 
 import (
 	"reflect"
+	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -37,12 +38,10 @@ func WithBlockSize(blockSize int) PoolOpt {
 
 // Pool is the off heap memory pool. It it safe to be used concurrently
 type Pool struct {
-	free   [][]byte
-	freeMu *sync.Mutex
+	sync.RWMutex
 
-	allocated   map[*byte]struct{}
-	allocatedMu *sync.Mutex
-
+	free      [][]byte
+	allocated map[*byte]struct{}
 	initOpts  poolOpts
 	maxBlocks int
 }
@@ -55,18 +54,19 @@ func New(maxBlocks int, opts ...PoolOpt) (*Pool, error) {
 		opt(&o)
 	}
 	p := &Pool{
-		initOpts:    o,
-		free:        make([][]byte, 0, maxBlocks),
-		freeMu:      &sync.Mutex{},
-		allocated:   make(map[*byte]struct{}, maxBlocks),
-		allocatedMu: &sync.Mutex{},
-		maxBlocks:   maxBlocks,
+		initOpts:  o,
+		free:      make([][]byte, 0, maxBlocks),
+		allocated: make(map[*byte]struct{}, maxBlocks),
+		maxBlocks: maxBlocks,
 	}
 	if o.preAlloc > 0 {
 		if err := p.prealloc(o.preAlloc); err != nil {
 			return nil, err
 		}
 	}
+	runtime.SetFinalizer(p, func(pool *Pool) {
+		pool.Close()
+	})
 	return p, nil
 }
 
@@ -77,8 +77,8 @@ func (p *Pool) Get() ([]byte, error) {
 		return b, nil
 	}
 
-	p.allocatedMu.Lock()
-	defer p.allocatedMu.Unlock()
+	p.Lock()
+	defer p.Unlock()
 
 	if len(p.allocated) == p.maxBlocks {
 		return nil, ErrPoolFull
@@ -98,23 +98,23 @@ func (p *Pool) Return(b []byte) error {
 	if err := p.checkValidBlock(b); err != nil {
 		return err
 	}
-	p.freeMu.Lock()
-	defer p.freeMu.Unlock()
+	p.Lock()
+	defer p.Unlock()
 	p.free = append(p.free, b)
 	return nil
 }
 
 // FreeCount returns the number of free blocks that can be reused
 func (p *Pool) FreeCount() int {
-	p.freeMu.Lock()
-	defer p.freeMu.Unlock()
+	p.RLock()
+	defer p.RUnlock()
 	return len(p.free)
 }
 
 // AllocCount returns the total number of allocated blocks so far
 func (p *Pool) AllocCount() int {
-	p.allocatedMu.Lock()
-	defer p.allocatedMu.Unlock()
+	p.RLock()
+	defer p.RUnlock()
 	return len(p.allocated)
 }
 
@@ -125,8 +125,8 @@ func (p *Pool) Close() error {
 }
 
 func (p *Pool) tryPop() ([]byte, bool) {
-	p.freeMu.Lock()
-	defer p.freeMu.Unlock()
+	p.Lock()
+	defer p.Unlock()
 
 	if len(p.free) == 0 {
 		return nil, false
@@ -144,9 +144,9 @@ func (p *Pool) checkValidBlock(block []byte) error {
 	}
 
 	k := &block[0]
-	p.allocatedMu.Lock()
+	p.RLock()
 	_, found := p.allocated[k]
-	p.allocatedMu.Unlock()
+	p.RUnlock()
 
 	if !found || len(block) != p.initOpts.blockSize {
 		return ErrInvalidBlock
@@ -173,8 +173,10 @@ func (p *Pool) prealloc(n int) error {
 }
 
 func (p *Pool) cleanup() error {
-	p.allocatedMu.Lock()
-	multiErr := NewMultiErr()
+	p.Lock()
+	defer p.Unlock()
+
+	multiErr := newMultiErr()
 	for arrayPtr := range p.allocated {
 		var block []byte
 		hdr := (*reflect.SliceHeader)(unsafe.Pointer(&block))
@@ -186,10 +188,6 @@ func (p *Pool) cleanup() error {
 		}
 	}
 	p.allocated = nil
-	p.allocatedMu.Unlock()
-
-	p.freeMu.Lock()
 	p.free = nil
-	p.freeMu.Unlock()
 	return multiErr.Return()
 }

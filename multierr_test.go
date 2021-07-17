@@ -1,4 +1,4 @@
-package stealthpool_test
+package stealthpool
 
 import (
 	"errors"
@@ -6,8 +6,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/Link512/stealthpool"
 )
 
 func TestMultiError(t *testing.T) {
@@ -54,7 +52,7 @@ func TestMultiError(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			require := require.New(t)
 			assert := assert.New(t)
-			me := stealthpool.NewMultiErr()
+			me := newMultiErr()
 			for _, err := range tc.errs {
 				me.Add(err)
 			}
